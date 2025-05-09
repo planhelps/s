@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جداول كشف الطلاب</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #e74c3c;
+            --bg-gradient-start: #7b4397;
+            --bg-gradient-end: #2b5876;
+            --edit-color: #9b59b6;
+            --add-color: #27ae60;
+        }
+        
+        body {
+            font-family: 'Tajawal', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 25px;
+            width: 98%;
+            max-width: 1400px;
+            min-height: 90vh;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            display: block;
+            width: 100%;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-family: 'Tajawal', sans-serif;
+            font-weight: 500;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        .back-btn {
+            background-color: var(--secondary-color);
+        }
+        
+        .add-btn {
+            background-color: var(--add-color);
+        }
+        
+        .link {
+            color: var(--primary-color);
+            display: block;
+            margin: 10px 0;
+            text-decoration: none;
+        }
+        
+        .link:hover {
+            text-decoration: underline;
+        }
+        
+        .divider {
+            height: 1px;
+            background-color: #eee;
+            margin: 20px 0;
+        }
+        
+        /* Tables */
+        .records-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            direction: rtl;
+            font-size: 15px;
+        }
+        
+        .records-table th, .records-table td {
+            padding: 12px 8px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        
+        .records-table th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+            font-weight: 700;
+        }
+        
+        .records-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .editable-cell {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .editable-cell:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .edit-mode .editable-cell {
+            position: relative;
+        }
+        
+        .edit-mode .editable-cell:hover::after {
+            content: "تعديل";
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            font-size: 10px;
+            color: #333;
+            background: rgba(255,255,255,0.7);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        
+        .table-container {
+            max-height: 600px;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        /* Animation */
+        @keyframes expand {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        .animate-expand {
+            animation: expand 0.5s ease-out forwards;
+        }
+        
+        .edit-mode-banner {
+            background-color: #ffc107;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        #edit-toggle {
+            background-color: var(--edit-color);
+            margin-bottom: 20px;
+        }
+        
+        .class-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .class-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        .class-button:hover {
+            opacity: 0.9;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .edit-tools {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .edit-tools .btn {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+            text-align: right;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #888;
+        }
+        
+        .modal-close:hover {
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 15px;
+            text-align: right;
+        }
+        
+        .edit-student-modal {
+            position: fixed;
+            display: none;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 300px;
+            z-index: 1001;
+            padding: 20px;
+        }
+        
+        .edit-option {
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background-color: #f5f5f5;
+            transition: background-color 0.2s;
+        }
+        
+        .edit-option:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .color-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+        
+        .color-box {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+        }
+        
+        .color-box.active {
+            border: 2px solid #333;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 15px;
+            }
+            
+            .records-table th, .records-table td {
+                padding: 8px 5px;
+                font-size: 14px;
+            }
+            
+            .class-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+        
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            display: none;
+        }
+        
+        /* أنماط جديدة */
+        .attendance-row {
+            background-color: #f9f9f9;
+        }
+        
+        .attendance-info {
+            padding: 8px;
+            font-size: 14px;
+        }
+        
+        .participation-points {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .participation-points:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .day-box {
+            padding: 10px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            min-width: 80px;
+            margin: 0 5px;
+        }
+        
+        .day-box.selected {
+            background-color: #007bff;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .day-box.today {
+            border: 2px solid #28a745;
+        }
+        
+        .days-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .week-selector {
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .week-selector select {
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 16px;
+        }
+        
+        .options-container {
+            margin-top: 30px;
+        }
+        
+        .class-options {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .max-grade {
+            font-size: 12px;
+            color: #777;
+            display: block;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="main-container">
+
+<table id="student-table" class="records-table">
+    <tr>
+        <th>الاسم</th>
+        <th>الرقم</th>
+        <th>الملاحظات</th>
+    </tr>
+</table>
+
+        <!-- Dynamic content will be loaded here -->
+    </div>
+    
+    <!-- Add Student Modal -->
+    <div id="add-student-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('add-student-modal')">&times;</span>
+            <h2>إضافة طالب جديد</h2>
+            <form id="add-student-form">
+                <div class="form-group">
+                    <label for="student-name">اسم الطالب:</label>
+                    <input type="text" id="student-name" required>
+                </div>
+                <button type="submit" class="btn add-btn">إضافة الطالب</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Add Class Modal -->
+    <div id="add-class-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('add-class-modal')">&times;</span>
+            <h2>إضافة فصل جديد</h2>
+            <form id="add-class-form">
+                <div class="form-group">
+                    <label for="class-name">اسم الفصل:</label>
+                    <input type="text" id="class-name" required>
+                </div>
+                <button type="submit" class="btn add-btn">إضافة الفصل</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Edit Student Modal -->
+    <div id="edit-student-modal" class="edit-student-modal">
+        <div class="edit-option" id="edit-name-option">تعديل الاسم</div>
+        <div class="edit-option" id="edit-color-option">تعديل اللون</div>
+        <div id="color-selection" style="display: none;">
+            <div class="color-options">
+                <div class="color-box" style="background-color: #ffffff;" data-color="#ffffff"></div>
+                <div class="color-box" style="background-color: #fffacd;" data-color="#fffacd"></div>
+                <div class="color-box" style="background-color: #e6ffe6;" data-color="#e6ffe6"></div>
+                <div class="color-box" style="background-color: #ffe6cc;" data-color="#ffe6cc"></div>
+                <div class="color-box" style="background-color: #e6e6fa;" data-color="#e6e6fa"></div>
+                <div class="color-box" style="background-color: #ffd6e7;" data-color="#ffd6e7"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-backdrop" id="modal-backdrop"></div>
+
+    <script>
+        // Application State
+        const state = {
+            currentView: 'home',
+            selectedGrade: null,
+            selectedClass: null,
+            recordType: null,
+            editMode: false,
+            students: {},
+            currentEditStudent: null,
+            currentWeek: 1,
+            selectedDay: 'الأحد',
+            participationPoints: {},
+            assignmentPoints: {}
+        };
+        
+        // Generate mock data
+        function generateMockData() {
+            const grades = ['اول-ثانوي', 'ثاني-ثانوي', 'ثالث-ثانوي'];
+            const classesPerGrade = 5;
+            const studentsPerClass = 30;
+            
+            const result = {};
+            
+            grades.forEach(grade => {
+                result[grade] = {};
+                const gradePrefix = grade === 'اول-ثانوي' ? '1' : 
+                                   grade === 'ثاني-ثانوي' ? '2' : '3';
+                
+                for (let classNum = 1; classNum <= classesPerGrade; classNum++) {
+                    const className = `${gradePrefix}/${classNum}`;
+                    result[grade][className] = [];
+                    
+                    for (let studentNum = 1; studentNum <= studentsPerClass; studentNum++) {
+                        result[grade][className].push({
+                            name: `الطالب ${studentNum}`,
+                            homework: 0,       // واجبات
+                            research: 0,       // بحوث
+                            participation: 0,  // مشاركة
+                            activities: 0,     // نشاطات وتطبيقات صفية
+                            shortExams: 0,     // اختبارات قصيرة
+                            finalPractical: 0, // عملي نهائي
+                            exam: 0,           // اختبار
+                            assignments: 0,    // مذكره
+                            color: 'white',
+                            highlighted: false
+                        });
+                    }
+                }
+            });
+            
+            return result;
+        }
+
+        // Format Gregorian date
+        function formatGregorianDate(date) {
+            const months = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", 
+                           "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+            return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+        }
+
+        // Format Hijri date (simplified)
+        function formatHijriDate(date) {
+            const hijriMonths = ["محرم", "صفر", "ربيع الأول", "ربيع الثاني", 
+                               "جمادى الأولى", "جمادى الآخرة", "رجب", "شعبان", 
+                               "رمضان", "شوال", "ذو القعدة", "ذو الحجة"];
+            const hijriDay = date.getDate() % 30 || 30;
+            const hijriMonth = hijriMonths[date.getMonth()];
+            const hijriYear = date.getFullYear() - 579;
+            
+            return `${hijriDay} ${hijriMonth} ${hijriYear}هـ`;
+        }
+
+        // Get current week days with dates
+        function getWeekDaysWithDates() {
+            const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
+            const today = new Date();
+            const currentDay = today.getDay(); // 0 for Sunday, 6 for Saturday
+            
+            return days.map((day, index) => {
+                const dayDate = new Date(today);
+                dayDate.setDate(today.getDate() + (index - currentDay));
+                
+                return {
+                    name: day,
+                    gregorianDate: formatGregorianDate(dayDate),
+                    hijriDate: formatHijriDate(dayDate),
+                    isToday: index === currentDay
+                };
+            });
+        }
+
+        // Calculate attendance count for student
+        function calculateAttendanceCount(studentIndex, week) {
+            if (!state.attendance || !state.attendance[state.selectedGrade] || 
+                !state.attendance[state.selectedGrade][state.selectedClass] || 
+                !state.attendance[state.selectedGrade][state.selectedClass][week]) {
+                return 0;
+            }
+            
+            let count = 0;
+            const weekData = state.attendance[state.selectedGrade][state.selectedClass][week];
+            
+            for (const day in weekData) {
+                if (weekData[day][studentIndex]) {
+                    count++;
+                }
+            }
+            
+            return count;
+        }
+
+        // Calculate absence count for student
+        function calculateAbsenceCount(studentIndex, week) {
+            if (!state.attendance || !state.attendance[state.selectedGrade] || 
+                !state.attendance[state.selectedGrade][state.selectedClass] || 
+                !state.attendance[state.selectedGrade][state.selectedClass][week]) {
+                return 0;
+            }
+            
+            let count = 0;
+            const weekData = state.attendance[state.selectedGrade][state.selectedClass][week];
+            
+            for (const day in weekData) {
+                if (weekData[day][studentIndex] === false || weekData[day][studentIndex] === undefined) {
+                    count++;
+                }
+            }
+            
+            return count;
+        }
+
+        // Check if student is present for selected day
+        function isStudentPresent(studentIndex) {
+            if (!state.attendance || !state.attendance[state.selectedGrade] || 
+                !state.attendance[state.selectedGrade][state.selectedClass] || 
+                !state.attendance[state.selectedGrade][state.selectedClass][state.currentWeek] || 
+                !state.attendance[state.selectedGrade][state.selectedClass][state.currentWeek][state.selectedDay]) {
+                return false;
+            }
+            return state.attendance[state.selectedGrade][state.selectedClass][state.currentWeek][state.selectedDay][studentIndex] || false;
+        }
+
+        // Toggle attendance status for student
+        function toggleAttendance(studentIndex) {
+            if (!state.attendance) {
+                state.attendance = {};
+            }
+            if (!state.attendance[state.selectedGrade]) {
+                state.attendance[state.selectedGrade] = {};
+            }
+            if (!state.attendance[state.selectedGrade][state.selectedClass]) {
+                state.attendance[state.selectedGrade][state.selectedClass] = {};
+            }
+            if (!state.attendance[state.selectedGrade][state.selectedClass][state.currentWeek]) {
+                state.attendance[state.selectedGrade][state.selectedClass][state.currentWeek] = {};
+            }
+            if (!state.attendance[state.selectedGrade][state.selectedClass][state.currentWeek][state.selectedDay]) {
+                state.attendance[state.selectedGrade][state.selectedClass][state.currentWeek][state.selectedDay] = {};
+            }
+            
+            const currentStatus = state.attendance[state.selectedGrade][state.selectedClass][state.currentWeek][state.selectedDay][studentIndex] || false;
+            state.attendance[state.selectedGrade][state.selectedClass][state.currentWeek][state.selectedDay][studentIndex] = !currentStatus;
+            
+            renderAttendanceDetails();
+        }
+
+        // Select day in attendance view
+        function selectDay(dayName) {
+            state.selectedDay = dayName;
+            renderAttendanceDetails();
+        }
+
+        // Change current week
+        function changeWeek() {
+            const weekSelect = document.getElementById('week-select');
+            state.currentWeek = parseInt(weekSelect.value);
+            renderAttendanceDetails();
+        }
+
+        // Add participation point
+        function addParticipationPoint(studentIndex) {
+    if (!state.participationPoints) {
+        state.participationPoints = {};
+    }
+    if (!state.participationPoints[state.selectedGrade]) {
+        state.participationPoints[state.selectedGrade] = {};
+    }
+    if (!state.participationPoints[state.selectedGrade][state.selectedClass]) {
+        state.participationPoints[state.selectedGrade][state.selectedClass] = {};
+    }
+    if (!state.participationPoints[state.selectedGrade][state.selectedClass][studentIndex]) {
+        state.participationPoints[state.selectedGrade][state.selectedClass][studentIndex] = 0;
+    }
+    
+    state.participationPoints[state.selectedGrade][state.selectedClass][studentIndex]++;
+    
+    // تحديث الخلية فقط بدلاً من إعادة رسم الجدول بالكامل
+    const participationCell = document.querySelector(`tr[data-index="${studentIndex}"] td:nth-child(4)`);
+    if (participationCell) {
+        participationCell.textContent = state.participationPoints[state.selectedGrade][state.selectedClass][studentIndex];
+    } else {
+        renderClassworkRecords(); // إذا لم يتم العثور على الخلية، نعيد رسم الجدول
+    }
+}
+
+        // Add assignment point
+        function addAssignmentPoint(studentIndex) {
+    if (!state.assignmentPoints) {
+        state.assignmentPoints = {};
+    }
+    if (!state.assignmentPoints[state.selectedGrade]) {
+        state.assignmentPoints[state.selectedGrade] = {};
+    }
+    if (!state.assignmentPoints[state.selectedGrade][state.selectedClass]) {
+        state.assignmentPoints[state.selectedGrade][state.selectedClass] = {};
+    }
+    if (!state.assignmentPoints[state.selectedGrade][state.selectedClass][studentIndex]) {
+        state.assignmentPoints[state.selectedGrade][state.selectedClass][studentIndex] = 0;
+    }
+    
+    state.assignmentPoints[state.selectedGrade][state.selectedClass][studentIndex]++;
+    
+    // تحديث الخلية فقط بدلاً من إعادة رسم الجدول بالكامل
+    const assignmentCell = document.querySelector(`tr[data-index="${studentIndex}"] td:nth-child(6)`);
+    if (assignmentCell) {
+        assignmentCell.textContent = state.assignmentPoints[state.selectedGrade][state.selectedClass][studentIndex];
+    } else {
+        renderClassworkRecords(); // إذا لم يتم العثور على الخلية، نعيد رسم الجدول
+    }
+}
+
+// 7. تحديث عناصر المجموعة الخاصة بألوان الطلاب
+// أضف هذا الكود في المكان المناسب للمحتوى HTML
+// يمكنك تعديل خيارات الألوان في edit-student-modal
+const updatedColorOptionsHTML = `
+<div id="color-selection" style="display: none;">
+    <div class="color-options">
+        <div class="color-box" style="background-color: #ffffff;" data-color="#ffffff"></div>
+        <div class="color-box" style="background-color: #fffacd;" data-color="#fffacd"></div>
+        <div class="color-box" style="background-color: #e6ffe6;" data-color="#e6ffe6"></div>
+        <div class="color-box" style="background-color: #ffe6cc;" data-color="#ffe6cc"></div>
+        <div class="color-box" style="background-color: #e6e6fa;" data-color="#e6e6fa"></div>
+        <div class="color-box" style="background-color: #ffd6e7;" data-color="#ffd6e7"></div>
+        <div class="color-box" style="background-color: #f0f8ff;" data-color="#f0f8ff"></div>
+        <div class="color-box" style="background-color: #e0ffff;" data-color="#e0ffff"></div>
+    </div>
+</div>
+`;
+
+        // Render classwork records view
+        function renderClassworkRecords() {
+    const container = document.getElementById('main-container');
+    const students = state.students[state.selectedGrade][state.selectedClass];
+    
+    let editToolsHTML = '';
+    if (state.editMode) {
+        editToolsHTML = `
+            <div class="edit-tools">
+                <button class="btn add-btn" onclick="showAddStudentModal()">إضافة طالب جديد</button>
+            </div>
+        `;
+    }
+    
+    let tableHTML = `
+        <h1>كشف أعمال السنة - ${state.selectedClass}</h1>
+        <div class="date-display">
+            <span>${formatGregorianDate(new Date())}</span>
+            <span>${formatHijriDate(new Date())}</span>
+        </div>
+        <button id="edit-toggle" class="btn" onclick="toggleEditMode()">
+            ${state.editMode ? 'إلغاء وضع التعديل' : 'تفعيل وضع التعديل'}
+        </button>
+        <button class="btn" onclick="navigateTo('attendance-details')">
+            تفاصيل الغياب والحضور
+        </button>
+        <div id="edit-banner" class="edit-mode-banner ${state.editMode ? '' : 'hidden'}">
+            أنت الآن في وضع التعديل
+        </div>
+        ${editToolsHTML}
+        <div class="table-container">
+            <table class="records-table ${state.editMode ? 'edit-mode' : ''}">
+                <thead>
+                    <tr>
+                        <th>اسم الطالب</th>
+                        <th>درجة الواجبات</th>
+                        <th>درجة المشاركة</th>
+                        <th>نقاط المشاركة</th>
+                        <th>درجة المذكره</th>
+                        <th>نقاط المذكره</th>
+                        <th>درجة الاختبار الشهري</th>
+                        <th>درجة الاختبار العملي</th>
+                        ${state.editMode ? '<th>حذف</th>' : ''}
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    students.forEach((student, index) => {
+        const participationPoints = state.participationPoints[state.selectedGrade]?.[state.selectedClass]?.[index] || 0;
+        const assignmentPoints = state.assignmentPoints[state.selectedGrade]?.[state.selectedClass]?.[index] || 0;
+        const highlightColor = student.highlighted ? student.color || '#e6e6fa' : student.color;
+        
+        tableHTML += `
+            <tr data-index="${index}" style="background-color: ${highlightColor}">
+                <td class="student-name" onclick="handleStudentNameClick(event, ${index})">${student.name}</td>
+                <td class="editable-cell" onclick="handleCellClick(event, ${index}, 'homework')">${student.homework}</td>
+                <td class="editable-cell" onclick="handleCellClick(event, ${index}, 'participation')">${student.participation}</td>
+                <td class="${state.editMode ? 'editable-cell' : 'participation-points'}" onclick="handleCellClick(event, ${index}, 'participationPoints')">${participationPoints}</td>
+                <td class="editable-cell" onclick="handleCellClick(event, ${index}, 'assignments')">${student.assignments}</td>
+                <td class="${state.editMode ? 'editable-cell' : 'participation-points'}" onclick="handleCellClick(event, ${index}, 'assignmentPoints')">${assignmentPoints}</td>
+                <td class="editable-cell" onclick="handleCellClick(event, ${index}, 'exam')">${student.exam}</td>
+                <td class="editable-cell" onclick="handleCellClick(event, ${index}, 'research')">${student.research}</td>
+                ${state.editMode ? `<td><button class="btn back-btn" style="padding: 5px; margin: 0;" onclick="deleteStudent(${index})">حذف</button></td>` : ''}
+            </tr>
+        `;
+    });
+    
+    tableHTML += `
+                </tbody>
+            </table>
+        </div>
+        <button class="btn back-btn" onclick="navigateTo('class-options')">رجوع</button>
+    `;
+    
+    container.innerHTML = tableHTML;
+}
+        // Render attendance details view
+        function renderAttendanceDetails() {
+            const container = document.getElementById('main-container');
+            const students = state.students[state.selectedGrade][state.selectedClass];
+            const weekDays = getWeekDaysWithDates();
+            
+            let weekSelectorHTML = `
+                <div class="week-selector">
+                    <div class="date-display">
+                        <span>${formatGregorianDate(new Date())}</span>
+                        <span>${formatHijriDate(new Date())}</span>
+                    </div>
+                    <label for="week-select">الأسبوع:</label>
+                    <select id="week-select" onchange="changeWeek()">
+            `;
+            
+            for (let i = 1; i <= 12; i++) {
+                weekSelectorHTML += `<option value="${i}" ${state.currentWeek === i ? 'selected' : ''}>الأسبوع ${i}</option>`;
+            }
+            
+            weekSelectorHTML += `</select></div>`;
+            
+            let daysHTML = `
+                <div class="days-container">
+                    ${weekDays.map(day => `
+                        <div class="day-box ${day.name === state.selectedDay ? 'selected' : ''} ${day.isToday ? 'today' : ''}" 
+                             onclick="selectDay('${day.name}')">
+                            <div class="day-name">${day.name}</div>
+                            <div class="day-date">${day.gregorianDate}</div>
+                            <div class="day-hijri">${day.hijriDate}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            let tableHTML = `
+                <h1>تفاصيل الغياب والحضور - ${state.selectedClass}</h1>
+                ${weekSelectorHTML}
+                ${daysHTML}
+                <div class="table-container">
+                    <table class="records-table">
+                        <thead>
+                            <tr>
+                                <th>اسم الطالب</th>
+                                <th>الحضور / الغياب</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            students.forEach((student, index) => {
+                const attendanceCount = calculateAttendanceCount(index, state.currentWeek);
+                const absenceCount = calculateAbsenceCount(index, state.currentWeek);
+                const isPresent = isStudentPresent(index);
+                
+                tableHTML += `
+                    <tr>
+                        <td>${student.name}</td>
+                        <td>
+                            <div class="attendance-info">
+                                <button class="attendance-btn ${isPresent ? 'present' : ''}" 
+                                        onclick="toggleAttendance(${index})">
+                                    ${isPresent ? '✓' : '✗'}
+                                </button>
+                                <span>حضور: ${attendanceCount} | غياب: ${absenceCount}</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableHTML += `
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn back-btn" onclick="navigateTo('classwork-records')">رجوع</button>
+            `;
+            
+            container.innerHTML = tableHTML;
+        }
+
+        // Highlight student row
+        function highlightStudent(studentIndex) {
+    const students = state.students[state.selectedGrade][state.selectedClass];
+    students[studentIndex].highlighted = !students[studentIndex].highlighted;
+    
+    // تغيير اللون اعتماداً على الحالة المحددة
+    if (students[studentIndex].highlighted) {
+        // إذا كان هناك لون مخصص مسبقًا، نحتفظ به
+        if (!students[studentIndex].originalColor) {
+            students[studentIndex].originalColor = students[studentIndex].color || 'white';
+        }
+        // نستخدم لونًا آخر للتظليل (يمكنك تغييره حسب الرغبة)
+        students[studentIndex].color = '#e6e6fa'; // لون بنفسجي فاتح
+    } else {
+        // استعادة اللون الأصلي
+        if (students[studentIndex].originalColor) {
+            students[studentIndex].color = students[studentIndex].originalColor;
+            delete students[studentIndex].originalColor;
+        }
+    }
+    
+    renderClassworkRecords();
+}
+
+        // Toggle edit mode
+        function toggleEditMode() {
+            state.editMode = !state.editMode;
+            
+            const editToggleBtn = document.getElementById('edit-toggle');
+            if (editToggleBtn) {
+                editToggleBtn.classList.add('pulse-effect');
+                setTimeout(() => {
+                    editToggleBtn.classList.remove('pulse-effect');
+                }, 500);
+            }
+            
+            if (state.currentView === 'classwork-records') {
+                renderClassworkRecords();
+            } else if (state.currentView === 'attendance-details') {
+                renderAttendanceDetails();
+            } else if (state.currentView === 'student-records') {
+                renderStudentRecords();
+            }
+        }
+
+        // Handle cell click for editing
+        function handleCellClick(event, studentIndex, field) {
+    if (!state.editMode) {
+        // إذا كان الحقل هو نقاط المشاركة أو نقاط المذكرة وليس في وضع التعديل، نضيف نقطة
+        if (field === 'participationPoints') {
+            addParticipationPoint(studentIndex);
+            return;
+        } else if (field === 'assignmentPoints') {
+            addAssignmentPoint(studentIndex);
+            return;
+        }
+        return;
+    }
+    
+    const student = state.students[state.selectedGrade][state.selectedClass][studentIndex];
+    const maxGrades = {
+        'homework': 10,
+        'research': 10,
+        'participation': 10,
+        'assignments': 10,
+        'exam': 20,
+        'activities': 10,
+        'shortExams': 20,
+        'finalPractical': 10
+    };
+    
+    // التعامل مع نقاط المشاركة ونقاط المذكرة
+    if (field === 'participationPoints') {
+        const currentPoints = state.participationPoints[state.selectedGrade]?.[state.selectedClass]?.[studentIndex] || 0;
+        const newValue = prompt(`تعديل نقاط المشاركة للطالب ${student.name}:`, currentPoints);
+        
+        if (newValue !== null) {
+            const numValue = parseInt(newValue);
+            if (!isNaN(numValue) && numValue >= 0) {
+                if (!state.participationPoints) state.participationPoints = {};
+                if (!state.participationPoints[state.selectedGrade]) state.participationPoints[state.selectedGrade] = {};
+                if (!state.participationPoints[state.selectedGrade][state.selectedClass]) state.participationPoints[state.selectedGrade][state.selectedClass] = {};
+                
+                state.participationPoints[state.selectedGrade][state.selectedClass][studentIndex] = numValue;
+                renderClassworkRecords();
+            } else {
+                alert('يرجى إدخال قيمة رقمية صحيحة غير سالبة');
+            }
+        }
+        return;
+    }
+    
+    
+    // التعامل مع الحقول العادية
+    const fieldMaxGrade = maxGrades[field] || 10;
+    const newValue = prompt(`تعديل ${getFieldLabel(field)} للطالب ${student.name} (الدرجة القصوى: ${fieldMaxGrade}):`, student[field]);
+    
+    if (newValue !== null) {
+        const numValue = parseInt(newValue);
+        if (!isNaN(numValue)) {
+            // التحقق من أن القيمة ليست أكبر من الدرجة القصوى
+            if (numValue > fieldMaxGrade) {
+                alert(`القيمة المدخلة أكبر من الدرجة القصوى (${fieldMaxGrade})!`);
+                return;
+            }
+            
+            student[field] = numValue;
+            
+            if (state.currentView === 'classwork-records') {
+                renderClassworkRecords();
+            } else if (state.currentView === 'attendance-details') {
+                renderAttendanceDetails();
+            } else if (state.currentView === 'student-records') {
+                renderStudentRecords();
+            }
+        } else {
+            alert('يرجى إدخال قيمة رقمية صحيحة');
+        }
+    }
+}
+
+        // Get field label for prompt
+        function getFieldLabel(field) {
+            const labels = {
+                'homework': 'درجة الواجبات',
+                'research': 'درجة البحوث',
+                'participation': 'درجة المشاركة',
+                'assignments': 'درجة المذكرة',
+                'exam': 'درجة الاختبار الشهري',
+                'activities': 'نشاطات وتطبيقات صفية',
+                'shortExams': 'اختبارات قصيرة',
+                'finalPractical': 'عملي نهائي'
+            };
+            return labels[field] || field;
+        }
+
+        // Handle student name click for editing
+        function handleStudentNameClick(event, studentIndex) {
+            if (!state.editMode) return;
+            
+            state.currentEditStudent = studentIndex;
+            
+            const modal = document.getElementById('edit-student-modal');
+            const backdrop = document.getElementById('modal-backdrop');
+            
+            const rect = event.target.getBoundingClientRect();
+            modal.style.top = `${rect.bottom + 10}px`;
+            modal.style.left = `${rect.left + rect.width / 2}px`;
+            
+            modal.style.display = 'block';
+            backdrop.style.display = 'block';
+            
+            document.getElementById('color-selection').style.display = 'none';
+            
+            document.getElementById('edit-name-option').onclick = function() {
+                const student = state.students[state.selectedGrade][state.selectedClass][studentIndex];
+                const newName = prompt('تعديل اسم الطالب:', student.name);
+                
+                if (newName !== null && newName.trim() !== '') {
+                    student.name = newName;
+                    closeEditStudentModal();
+                    
+                    if (state.currentView === 'classwork-records') {
+                        renderClassworkRecords();
+                    } else if (state.currentView === 'attendance-details') {
+                        renderAttendanceDetails();
+                    } else if (state.currentView === 'student-records') {
+                        renderStudentRecords();
+                    }
+                }
+            };
+            
+            document.getElementById('edit-color-option').onclick = function() {
+                document.getElementById('color-selection').style.display = 'block';
+                setupColorSelection(studentIndex);
+            };
+        }
+
+        // Setup color selection for student
+        function setupColorSelection(studentIndex) {
+    const colorBoxes = document.querySelectorAll('.color-box');
+    const student = state.students[state.selectedGrade][state.selectedClass][studentIndex];
+    
+    colorBoxes.forEach(box => {
+        box.classList.remove('active');
+        if (box.dataset.color === student.color) {
+            box.classList.add('active');
+        }
+        
+        box.onclick = function() {
+            student.color = this.dataset.color;
+            // إذا كان الطالب محددًا، نحفظ اللون الجديد كأصلي أيضًا
+            if (student.highlighted) {
+                student.originalColor = this.dataset.color;
+            }
+            closeEditStudentModal();
+            
+            if (state.currentView === 'classwork-records') {
+                renderClassworkRecords();
+            } else if (state.currentView === 'attendance-details') {
+                renderAttendanceDetails();
+            } else if (state.currentView === 'student-records') {
+                renderStudentRecords();
+            }
+        };
+    });
+}
+
+        // Close edit student modal
+        function closeEditStudentModal() {
+            document.getElementById('edit-student-modal').style.display = 'none';
+            document.getElementById('modal-backdrop').style.display = 'none';
+            document.getElementById('color-selection').style.display = 'none';
+        }
+
+        // Show add student modal
+        function showAddStudentModal() {
+            const modal = document.getElementById('add-student-modal');
+            modal.style.display = 'flex';
+            document.getElementById('add-student-form').reset();
+            
+            document.getElementById('add-student-form').onsubmit = function(e) {
+                e.preventDefault();
+                addNewStudent();
+            };
+        }
+
+        // Add new student
+        function addNewStudent() {
+            const name = document.getElementById('student-name').value;
+            
+            const newStudent = {
+                name,
+                homework: 0,
+                research: 0,
+                participation: 0,
+                activities: 0,
+                shortExams: 0,
+                finalPractical: 0,
+                exam: 0,
+                assignments: 0,
+                color: 'white',
+                highlighted: false
+            };
+            
+            state.students[state.selectedGrade][state.selectedClass].push(newStudent);
+            closeModal('add-student-modal');
+            
+            if (state.currentView === 'classwork-records') {
+                renderClassworkRecords();
+            } else if (state.currentView === 'attendance-details') {
+                renderAttendanceDetails();
+            } else if (state.currentView === 'student-records') {
+                renderStudentRecords();
+            }
+        }
+
+        // Show add class modal
+        function showAddClassModal() {
+            const modal = document.getElementById('add-class-modal');
+            modal.style.display = 'flex';
+            document.getElementById('add-class-form').reset();
+            
+            document.getElementById('add-class-form').onsubmit = function(e) {
+                e.preventDefault();
+                addNewClass();
+            };
+        }
+
+        // Add new class
+        function addNewClass() {
+            const className = document.getElementById('class-name').value;
+            
+            if (className && !state.students[state.selectedGrade][className]) {
+                state.students[state.selectedGrade][className] = [];
+                closeModal('add-class-modal');
+                renderClassSelection();
+            } else {
+                alert('اسم الفصل موجود بالفعل أو غير صالح');
+            }
+        }
+
+        // Close modal
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Delete student
+        function deleteStudent(index) {
+            if (confirm('هل أنت متأكد من حذف هذا الطالب؟')) {
+                state.students[state.selectedGrade][state.selectedClass].splice(index, 1);
+                
+                if (state.currentView === 'classwork-records') {
+                    renderClassworkRecords();
+                } else if (state.currentView === 'attendance-details') {
+                    renderAttendanceDetails();
+                } else if (state.currentView === 'student-records') {
+                    renderStudentRecords();
+                }
+            }
+        }
+
+        // Render home view
+        function renderHome() {
+            const container = document.getElementById('main-container');
+            const grades = Object.keys(state.students);
+            
+            let gradeButtonsHTML = '';
+            grades.forEach(grade => {
+                gradeButtonsHTML += `<button class="btn" onclick="selectGrade('${grade}')">${getGradeDisplayName(grade)}</button>`;
+            });
+            
+            container.innerHTML = `
+                <h1>جداول كشف الطلاب</h1>
+                <p>يرجى اختيار المرحلة</p>
+                ${gradeButtonsHTML}
+            `;
+        }
+
+        // Get grade display name
+        function getGradeDisplayName(grade) {
+            if (grade === 'اول-ثانوي') return 'الصف الأول الثانوي';
+            if (grade === 'ثاني-ثانوي') return 'الصف الثاني الثانوي';
+            if (grade === 'ثالث-ثانوي') return 'الصف الثالث الثانوي';
+            return grade;
+        }
+
+        // Render class selection view
+        function renderClassSelection() {
+            const container = document.getElementById('main-container');
+            const gradeText = getGradeDisplayName(state.selectedGrade);
+            
+            let classButtonsHTML = '<div class="class-grid">';
+            const classes = Object.keys(state.students[state.selectedGrade]);
+            
+            classes.forEach(className => {
+                classButtonsHTML += `
+                    <button class="class-button" onclick="selectClass('${className}')">
+                        ${className}
+                    </button>
+                `;
+            });
+            
+            classButtonsHTML += '</div>';
+            
+            container.innerHTML = `
+                <h1>اختر الفصل - ${gradeText}</h1>
+                <div class="edit-tools">
+                    <button class="btn add-btn" onclick="showAddClassModal()">إضافة فصل</button>
+                </div>
+                ${classButtonsHTML}
+                <button class="btn back-btn" onclick="navigateTo('home')">رجوع</button>
+            `;
+        }
+
+        // Render class options view
+        function renderClassOptions() {
+            const container = document.getElementById('main-container');
+            
+            container.innerHTML = `
+                <h1>اختر نوع الكشف - ${state.selectedClass}</h1>
+                <div class="options-container">
+                    <div class="class-options">
+                        <button class="class-button" onclick="selectRecordType('noor')">كشف نظام نور</button>
+                        <button class="class-button" onclick="selectRecordType('classwork')">كشف أعمال السنة</button>
+                    </div>
+                    <button class="btn back-btn" onclick="navigateTo('class-selection')">رجوع</button>
+                </div>
+            `;
+        }
+
+        // Select grade
+        function selectGrade(grade) {
+            state.selectedGrade = grade;
+            navigateTo('class-selection');
+        }
+
+        // Select class
+        function selectClass(className) {
+            state.selectedClass = className;
+            navigateTo('class-options');
+        }
+
+        // Select record type
+        function selectRecordType(type) {
+            state.recordType = type;
+            if (type === 'noor') {
+                navigateTo('student-records');
+            } else if (type === 'classwork') {
+                navigateTo('classwork-records');
+            }
+        }
+
+        // Navigation function
+        function navigateTo(view) {
+            state.currentView = view;
+            
+            switch(view) {
+                case 'home':
+                    renderHome();
+                    break;
+                case 'class-selection':
+                    renderClassSelection();
+                    break;
+                case 'class-options':
+                    renderClassOptions();
+                    break;
+                case 'student-records':
+                    renderStudentRecords();
+                    break;
+                case 'classwork-records':
+                    renderClassworkRecords();
+                    break;
+                case 'attendance-details':
+                    renderAttendanceDetails();
+                    break;
+            }
+        }
+
+        // Render student records view
+        function renderStudentRecords() {
+            const container = document.getElementById('main-container');
+            const students = state.students[state.selectedGrade][state.selectedClass];
+            
+            let editToolsHTML = '';
+            if (state.editMode) {
+                editToolsHTML = `
+                    <div class="edit-tools">
+                        <button class="btn add-btn" onclick="showAddStudentModal()">إضافة طالب جديد</button>
+                    </div>
+                `;
+            }
+            
+            let tableHTML = `
+                <h1>كشف نظام نور - ${state.selectedClass}</h1>
+                <button id="edit-toggle" class="btn" onclick="toggleEditMode()">
+                    ${state.editMode ? 'إلغاء وضع التعديل' : 'تفعيل وضع التعديل'}
+                </button>
+                <div id="edit-banner" class="edit-mode-banner ${state.editMode ? '' : 'hidden'}">
+                    أنت الآن في وضع التعديل
+                </div>
+                ${editToolsHTML}
+                <div class="table-container">
+                    <table class="records-table ${state.editMode ? 'edit-mode' : ''}">
+                        <thead>
+                            <tr>
+                                <th>اسم الطالب</th>
+                                <th>درجة الواجبات <span class="max-grade">/ 10</span></th>
+                                <th>درجة البحوث <span class="max-grade">/ 10</span></th>
+                                <th>نشاطات وتطبيقات صفيه <span class="max-grade">/ 10</span></th>
+                                <th>درجة المشاركه <span class="max-grade">/ 10</span></th>
+                                <th>اختبارات قصيره <span class="max-grade">/ 20</span></th>
+                                <th>عملي نهائي <span class="max-grade">/ 10</span></th>
+                                <th>المجموع النهائي <span class="max-grade">/ 70</span></th>
+                                ${state.editMode ? '<th>حذف</th>' : ''}
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            students.forEach((student, index) => {
+                const total = student.homework + student.research + student.activities + student.participation + student.shortExams + student.finalPractical;
+                
+                tableHTML += `
+                    <tr data-index="${index}" style="background-color: ${student.color}">
+                        <td class="student-name" onclick="handleStudentNameClick(event, ${index})">${student.name}</td>
+                        <td class="editable-cell" onclick="handleCellClick(event, ${index}, 'homework')">${student.homework}</td>
+                        <td class="editable-cell" onclick="handleCellClick(event, ${index}, 'research')">${student.research}</td>
+                        <td class="editable-cell" onclick="handleCellClick(event, ${index}, 'activities')">${student.activities}</td>
+                        <td class="editable-cell" onclick="handleCellClick(event, ${index}, 'participation')">${student.participation}</td>
+                        <td class="editable-cell" onclick="handleCellClick(event, ${index}, 'shortExams')">${student.shortExams}</td>
+                        <td class="editable-cell" onclick="handleCellClick(event, ${index}, 'finalPractical')">${student.finalPractical}</td>
+                        <td>${total}</td>
+                        ${state.editMode ? `<td><button class="btn back-btn" style="padding: 5px; margin: 0;" onclick="deleteStudent(${index})">حذف</button></td>` : ''}
+                    </tr>
+                `;
+            });
+            
+            tableHTML += `
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn back-btn" onclick="navigateTo('class-options')">رجوع</button>
+            `;
+            
+            container.innerHTML = tableHTML;
+            container.classList.add('animate-expand');
+            
+            setTimeout(() => {
+                container.classList.remove('animate-expand');
+            }, 500);
+        }
+
+        // Initialize application
+        function initApp() {
+            state.students = generateMockData();
+            renderHome();
+            
+            // Close modal when clicking outside
+            window.onclick = function(event) {
+                const modals = document.getElementsByClassName('modal');
+                for (let i = 0; i < modals.length; i++) {
+                    if (event.target === modals[i]) {
+                        modals[i].style.display = 'none';
+                    }
+                }
+                
+                if (event.target === document.getElementById('modal-backdrop')) {
+                    closeEditStudentModal();
+                }
+            };
+        }
+
+        // Start the application
+        initApp();
+    </script>
+
+<script>
+const tableId = "student-table";
+
+if (!localStorage.getItem("studentsData")) {
+    localStorage.setItem("studentsData", JSON.stringify([]));
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const data = JSON.parse(localStorage.getItem("studentsData"));
+    data.forEach(rowData => {
+        const row = table.insertRow();
+        rowData.forEach(cellText => {
+            const cell = row.insertCell();
+            cell.contentEditable = true;
+            cell.innerText = cellText;
+        });
+    });
+});
+
+function saveTableData() {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const data = [];
+    for (let i = 1; i < table.rows.length; i++) {
+        const row = table.rows[i];
+        const rowData = [];
+        for (let j = 0; j < row.cells.length; j++) {
+            rowData.push(row.cells[j].innerText);
+        }
+        data.push(rowData);
+    }
+    localStorage.setItem("studentsData", JSON.stringify(data));
+}
+
+document.addEventListener("input", () => {
+    saveTableData();
+});
+function saveData() {
+    const tableRows = document.querySelectorAll(".records-table tbody tr");
+    const data = [];
+
+    tableRows.forEach(row => {
+        const rowData = [];
+        row.querySelectorAll("td").forEach(cell => {
+            rowData.push(cell.innerText);
+        });
+        data.push(rowData);
+    });
+
+    localStorage.setItem("studentData", JSON.stringify(data));
+}
+
+// استرجاع البيانات
+function loadData() {
+    const storedData = localStorage.getItem("studentData");
+    if (!storedData) return;
+
+    const data = JSON.parse(storedData);
+    const tableRows = document.querySelectorAll(".records-table tbody tr");
+
+    data.forEach((rowData, i) => {
+        const cells = tableRows[i]?.querySelectorAll("td");
+        if (!cells) return;
+        rowData.forEach((text, j) => {
+            if (cells[j]) {
+                cells[j].innerText = text;
+            }
+        });
+    });
+}
+
+// تعديل تلقائي للتخزين عند أي تعديل
+document.addEventListener("DOMContentLoaded", () => {
+    loadData();
+
+    document.querySelectorAll(".editable-cell").forEach(cell => {
+        cell.addEventListener("input", () => {
+            saveData();
+        });
+
+        // للـ contenteditable دعم
+        cell.addEventListener("blur", () => {
+            saveData();
+        });
+    });
+});
+</script>
+
+
+<script>
+const STORAGE_KEY = "student_full_state";
+
+// تحميل الحالة بالكامل
+window.addEventListener("DOMContentLoaded", () => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+        try {
+            const parsedState = JSON.parse(saved);
+            Object.assign(state, parsedState); // دمج الحالة المحفوظة مع الحالية
+        } catch (e) {
+            console.error("خطأ أثناء تحميل الحالة:", e);
+        }
+    }
+});
+
+// حفظ الحالة بالكامل تلقائيًا كل 5 ثواني
+setInterval(() => {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+        console.error("خطأ أثناء حفظ الحالة:", e);
+    }
+}, 5000);
+</script>
+
+</body>
+</html>
